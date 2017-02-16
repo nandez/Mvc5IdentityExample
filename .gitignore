@@ -181,3 +181,4 @@ UpgradeLog*.htm
 
 # Microsoft Fakes
 FakesAssemblies/
+Mvc5IdentityExample/.vs/config/applicationhost.config
