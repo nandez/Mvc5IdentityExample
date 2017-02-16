@@ -27,5 +27,15 @@ namespace Mvc5IdentityExample.Data.EntityFramework.Repositories
         {
             return Set.FirstOrDefaultAsync(x => x.UserName == username, cancellationToken);
         }
+
+        public override void Remove(User entity)
+        {
+            var userEntry = Set.FirstOrDefault(t => t.UserId == entity.UserId);
+
+            if (userEntry != null)
+            {
+                Set.Remove(userEntry);
+            }
+        }
     }
 }

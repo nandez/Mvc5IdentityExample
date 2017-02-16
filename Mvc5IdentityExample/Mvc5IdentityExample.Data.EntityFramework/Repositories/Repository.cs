@@ -67,12 +67,12 @@ namespace Mvc5IdentityExample.Data.EntityFramework.Repositories
             return Set.FindAsync(cancellationToken, id);
         }
 
-        public void Add(TEntity entity)
+        public virtual void Add(TEntity entity)
         {
             Set.Add(entity);
         }
 
-        public void Update(TEntity entity)
+        public virtual void Update(TEntity entity)
         {
             var entry = _context.Entry(entity);
             if (entry.State == EntityState.Detached)
@@ -83,7 +83,7 @@ namespace Mvc5IdentityExample.Data.EntityFramework.Repositories
             entry.State = EntityState.Modified;
         }
 
-        public void Remove(TEntity entity)
+        public virtual void Remove(TEntity entity)
         {
             Set.Remove(entity);
         }
