@@ -9,10 +9,11 @@ using Entities = Mvc5IdentityExample.Domain.Entities;
 
 namespace Mvc5IdentityExample.Web.Identity
 {
-    public class UserStore : IUserLoginStore<IdentityUser, Guid>, IUserClaimStore<IdentityUser, Guid>, IUserRoleStore<IdentityUser, Guid>, IUserPasswordStore<IdentityUser, Guid>, IUserSecurityStampStore<IdentityUser, Guid>, IUserStore<IdentityUser, Guid>, IDisposable
+    public class UserStore : IUserLoginStore<IdentityUser, Guid>, IUserClaimStore<IdentityUser, Guid>, IUserRoleStore<IdentityUser, Guid>, IUserPasswordStore<IdentityUser, Guid>, IUserSecurityStampStore<IdentityUser, Guid>, IUserStore<IdentityUser, Guid>, IQueryableUserStore<IdentityUser, Guid>, IDisposable
     {
         private readonly IUnitOfWork _unitOfWork;
 
+        
         public UserStore(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
@@ -300,6 +301,16 @@ namespace Mvc5IdentityExample.Web.Identity
         {
             user.SecurityStamp = stamp;
             return Task.FromResult(0);
+        }
+        #endregion
+
+        #region IQueryableUserStore<IdentityUser, Guid> Members
+        public IQueryable<IdentityUser> Users
+        {
+            get
+            {
+                return _unitOfWork.UserRepository.GetAll().Select(t => getIdentityUser(t)).AsQueryable();
+            }
         }
         #endregion
 
