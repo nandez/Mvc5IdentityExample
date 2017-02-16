@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace Mvc5IdentityExample.Web.Models
 {
@@ -59,5 +60,16 @@ namespace Mvc5IdentityExample.Web.Models
         [Display(Name = "Confirm password")]
         [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; }
+    }
+
+    public class ViewUsersAccountsBootgridModel
+    {
+        public Guid UserId { get; set; }
+
+        public string UserName { get; set; }
+
+        public string RoleName { get; set; }
+
+        public bool CanBeDeleted { get; set; }
     }
 }

@@ -6,6 +6,8 @@ using System;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace Mvc5IdentityExample.Web.Controllers
 {
@@ -299,6 +301,134 @@ namespace Mvc5IdentityExample.Web.Controllers
             var linkedAccounts = _userManager.GetLogins(getGuid(User.Identity.GetUserId()));
             ViewBag.ShowRemoveButton = HasPassword() || linkedAccounts.Count > 1;
             return (ActionResult)PartialView("_RemoveAccountPartial", linkedAccounts);
+        }
+
+        //
+        // GET: /Account/ViewUserAccounts
+        public ActionResult ViewUserAccounts()
+        {
+            return View();
+        }
+
+        //
+        // POST: /Account/SearchUserAccount
+        [HttpPost]
+        public JsonResult SearchUserAccount()
+        {
+            BootGridResponse<ViewUsersAccountsBootgridModel> response = new BootGridResponse<ViewUsersAccountsBootgridModel>();
+            
+            try
+            {
+                int pageSize = int.Parse(Request.Form["rowCount"]);
+                int pageNumber = int.Parse(Request.Form["current"]);
+                string searchName = (Request.Form["searchPhrase"]).ToLower();
+                int total = 0;
+
+                // Gets total users matching the phrase
+                total = _userManager.Users.Count(t => t.UserName.ToLower().Contains(searchName));
+
+                // Paginates the users matching the phrase.
+                var result = _userManager.Users.Where(t => t.UserName.ToLower().Contains(searchName))
+                                                                  .OrderBy(a => a.UserName)
+                                                                  .Skip((pageNumber - 1) * pageSize)
+                                                                  .Take(pageSize < 0 ? total : pageSize);
+
+                foreach (var item in result)
+                {
+                    var userRoles = _userManager.GetRoles(item.Id);
+
+                    ViewUsersAccountsBootgridModel model = new ViewUsersAccountsBootgridModel()
+                    {
+                        UserId = item.Id,
+                        UserName = item.UserName,
+                        RoleName = userRoles.Any() ? string.Join(", ", userRoles) : "None",
+                        CanBeDeleted = !User.Identity.GetUserId().Equals(item.Id.ToString())
+                    };
+
+                    response.rows.Add(model);
+                }
+
+                response.total = response.rows.Count;
+                response.current = pageNumber;
+                response.rowCount = pageSize;
+            }
+            catch (Exception e)
+            {
+                //TODO: We should log the exception and (or) 
+                // notify the user something went wrong ...
+            }
+
+            return Json(response);
+        }
+
+        //
+        // GET: /Account/RegisterUserAccount
+        public ActionResult RegisterUserAccount()
+        {
+            return View();
+        }
+
+        //
+        // POST: /Account/RegisterUserAccount
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> RegisterUserAccount(RegisterViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = new IdentityUser() { UserName = model.UserName };
+                var result = await _userManager.CreateAsync(user, model.Password);
+                if (result.Succeeded)
+                {
+                    await SignInAsync(user, isPersistent: false);
+                    return RedirectToAction("ViewUserAccounts", "Account");
+                }
+                else
+                {
+                    AddErrors(result);
+                }
+            }
+
+            // If we got this far, something failed, redisplay form
+            return View(model);
+        }
+
+        //
+        // POST: /Account/DeleteUserAccount
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult DeleteUserAccount(Guid id)
+        {
+            // TODO: Define an output model to parse in the js...
+            dynamic response = new
+            {
+                IsError = true,
+                Messages = new List<string> { "There was an error while trying to delete the user account..." }
+            };
+                
+            try
+            {
+                // Gets the user
+                IdentityUser userToDelete = _userManager.FindById(id);
+
+                if (userToDelete != null)
+                    response.IsError = !_userManager.DeleteAsync(userToDelete).Result.Succeeded;
+            }
+            catch (AggregateException ex)
+            {
+                foreach (var inner in ex.InnerExceptions)
+                {
+                    response.Messages.Add(inner.Message);
+                    //TODO: We should log the exception..
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Messages.Add(ex.Message);
+                //TODO: We should log the exception..
+            }
+
+            return Json(response);
         }
 
         protected override void Dispose(bool disposing)

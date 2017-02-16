@@ -1,0 +1,153 @@
+﻿@model Mvc5IdentityExample.Web.Models.ViewUsersAccountsBootgridModel
+
+@{
+    ViewBag.Title = "Manage Users Accounts";
+}
+
+@section styles{
+    @Styles.Render("~/Styles/Plugins/BootgridStyle")
+}
+
+<div class="row">
+    <h2>@ViewBag.Title.</h2>
+    <hr />
+</div>
+<div class="row">
+    <div class="col-xs-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <div class="row">
+                    <div class="col-xs-12">
+                        <span>
+                            <strong>Available Users</strong>
+                        </span>
+                        <a class="btn btn-primary pull-right" href="@Url.Action("RegisterUserAccount", "Account")">
+                            <i class="fa fa-plus"></i> Add New User
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="table-responsive">
+                    <table id="usersGrid" class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th data-column-id="UserId">
+                                    @Html.DisplayNameFor(model => model.UserId)
+                                </th>
+                                <th data-column-id="UserName">
+                                    @Html.DisplayNameFor(model => model.UserName)
+                                </th>
+                                <th data-column-id="RoleName">
+                                    @Html.DisplayNameFor(model => model.RoleName)
+                                </th>
+                                <th data-formatter="commands" data-header-align="right" data-align="right">
+                                </th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Remove Account Confirmation Modal -->
+<div id="removeAccountModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Account Removal Confirmation</h4>
+            </div>
+            <div class="modal-body">
+                <div class="hidden">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="accountUserId" />
+                </div>
+                <p>Are you sure you want to delete the selected account?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button id="btnConfirmRemoval" type="button" class="btn btn-primary">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts{
+    <!-- Plugin Scripts -->
+    @Scripts.Render("~/Scripts/Plugins/BootgridScript")
+
+    <!-- Page Scripts -->
+    <script type="text/javascript">
+        //This script may have been included as a bundle,
+        //but was left on the page to serve as an example.
+
+        $(document).ready(function () {
+
+            
+
+            var grid = $("#usersGrid").bootgrid({
+                css: {
+                    table: 'table table-striped table-hover'
+                },
+                ajax: true,
+                url: "/Account/SearchUserAccount",
+                selection: true,
+                formatters: {
+                    "commands": function (column, row) {
+
+                        var output = '<button type="button" class="btn btn-xs btn-default command-edit" data-row-id="' + row.UserId + '"><span class="fa fa-pencil"></span></button>';
+
+                        if (row.CanBeDeleted){
+                            output += '<button type="button" class="btn btn-xs btn-danger command-delete" data-row-id="' + row.UserId + '"><span class="fa fa-trash-o"></span></button>';
+                        }
+
+                        return output;
+                    }
+                }
+            }).on("loaded.rs.jquery.bootgrid", function () {
+                grid.find(".command-edit").on("click", function (e) {
+                    // Redirects to the Update View.
+                    //window.location.href = "/Account/UpdateUserAccount/" + $(this).data("row-id");
+                    alert('Not yet implemented');
+                }).end().find(".command-delete").on("click", function (e) {
+                    
+                    // Save the selected userId
+                    $('input[name="accountUserId"').val($(this).data("row-id"));
+
+                    // Shows the confirmation modal.
+                    $('#removeAccountModal').modal('toggle');
+                });
+            });
+
+            $('#btnConfirmRemoval').click(function () {
+                $(this).disable(true);
+
+                var data = {
+                    "__RequestVerificationToken": $('#removeAccountModal').find('input[name="__RequestVerificationToken"]').val(),
+                    id: $('input[name="accountUserId"').val()
+                };
+
+                $.post('/Account/DeleteUserAccount/', data, function (response) {
+
+                    $('#removeAccountModal').modal('toggle');
+
+                    if (!response.IsError) {
+                        $("#usersGrid").bootgrid('reload');
+                    }
+                    else {
+                        // TODO: Message could be improved using a plugin or some 
+                        //fancy stuff like modals instead of an alert.
+                        alert("Oopss!\r\n" + response.Messages.join("\r\n"));
+                    }
+                });
+
+                $(this).disable(false);
+            });
+        });
+
+    </script>
+}
+
