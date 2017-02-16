@@ -399,7 +399,7 @@ namespace Mvc5IdentityExample.Web.Controllers
         public JsonResult DeleteUserAccount(Guid id)
         {
             // TODO: Define an output model to parse in the js...
-            dynamic response = new
+            OperationResultResponse response = new OperationResultResponse()
             {
                 IsError = true,
                 Messages = new List<string> { "There was an error while trying to delete the user account..." }
@@ -412,6 +412,9 @@ namespace Mvc5IdentityExample.Web.Controllers
 
                 if (userToDelete != null)
                     response.IsError = !_userManager.DeleteAsync(userToDelete).Result.Succeeded;
+
+                if (!response.IsError)
+                    response.Messages.Clear();
             }
             catch (AggregateException ex)
             {
