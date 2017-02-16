@@ -380,7 +380,6 @@ namespace Mvc5IdentityExample.Web.Controllers
                 var result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
-                    await SignInAsync(user, isPersistent: false);
                     return RedirectToAction("ViewUserAccounts", "Account");
                 }
                 else
